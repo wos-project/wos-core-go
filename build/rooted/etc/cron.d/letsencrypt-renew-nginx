@@ -1,0 +1,1 @@
+01 02,14 * * * /etc/cron.daily/letsencrypt-renew-nginx

@@ -1,0 +1,97 @@
+apiVersion: v1
+auth:
+  jwt:
+    realm: lazy
+    key: "insecure-set-me"
+    timeoutSeconds: 3600
+    maxRefreshSeconds: 
+    masterPassword: insecure-set-me
+  apiKey:
+    key: Api-Key
+    value: insecure-set-me
+commands:
+  exec: 
+    ffprobe:
+      command: ffprobe
+      args: 
+        - "-v"
+        - "quiet"
+        - "-print_format"
+        - "json"
+        - "-show_format"
+    m4a2mp4:
+      command: ffmpeg
+      args:
+        - "-y"
+        - "-i"
+        - "m4afile"
+        - "-c:a" 
+        - "copy"
+        - "mp4file"
+    heic2jpg:
+      command: convert
+      args:
+        - "-format"
+        - "jpg"
+        - "heicfile"
+        - "jpgfile"
+corsHosts:
+  - https://questori.com
+  - https://www.questori.com
+database:
+  main:
+    kind: postgres
+    host: localhost
+    port: 5432
+    database: wos_dev
+    username: wos_user
+    password: insecure
+    sslmode: disable
+host:
+  mode: localhost
+  hosts:
+    localhost:
+      domain: localhost
+      port: 8082
+      scheme: http
+    letsEncrypt:
+      domain: worldos.cloud
+      port: 443
+      scheme: https
+media:
+  convertM4a2Mp4: true
+  convertHeic2Jpg: true
+  webMediaPath: /ms
+  uploadTemp:
+    path: /var/tmp/mediatmp
+    maxAgeSecs: 4400
+  requireAuth: false
+  minIdWithThumbnails: 0
+  indexFilename: index.json
+  schemes:
+    localSimple:
+      id: 1
+      localPath: /var/tmp/media
+      webPath: h3yd73Diejs9E4jwhw38dCfhMq2qvNrT
+    s3_1:
+      id: 2
+      expireSecs: 3600
+      region: us-east-1
+      bucket: worldos
+      bucketEncoding:
+        field1:
+          name: userUid
+          secret: insecure-set-me
+    ipfs:
+      host: localhost
+      port: 5001
+mode: debug
+schedules:
+  cleanupOldTempFiles:
+    cron: "13 */4 * * *"
+swagger:
+  users:
+    swaggy: insecure-set-me
+  host: letsEncrypt
+
+
