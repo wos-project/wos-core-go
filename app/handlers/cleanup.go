@@ -22,12 +22,12 @@ func CleanupOldTempFiles() {
 			if f.IsDir() {
 				err = os.RemoveAll(f.Name())
 				if err != nil {
-					glog.Errorf("cannot remove old directory %s %v", f.Name, err)
+					glog.Errorf("cannot remove old directory %s %v", f.Name(), err)
 				}
 			} else {
 				err = os.Remove(f.Name())
 				if err != nil {
-					glog.Errorf("cannot remove old file %s %v", f.Name, err)
+					glog.Errorf("cannot remove old file %s %v", f.Name(), err)
 				}
 			}
 		}
