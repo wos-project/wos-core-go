@@ -4,21 +4,13 @@ server {
 
    location /v1 {
       proxy_set_header X-Real-IP $remote_addr;
-      proxy_pass http://localhost:8080;
+      proxy_pass http://localhost:9082;
    }
 
    location /swagger {
       proxy_set_header X-Real-IP $remote_addr;
-      proxy_pass http://localhost:8080;
+      proxy_pass http://localhost:9082;
    }
-
-   location /v1stage {
-      proxy_set_header X-Real-IP $remote_addr;
-      proxy_pass http://localhost:8081;
-   }
-
-    ssl_certificate /etc/letsencrypt/live/worldos.earth/fullchain.pem; # managed by Certbot
-    ssl_certificate_key /etc/letsencrypt/live/worldos.earth/privkey.pem; # managed by Certbot
 }
 
 server {

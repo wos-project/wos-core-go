@@ -138,7 +138,7 @@ func x(r io.Reader) {
 }
 
 // HandleObjectArchiveUploadMultipart godoc
-// @Summary HandleObjectArchiveUploadMultipart allows uploading a tar archive.  It saves to IPFS, creates thumbs, then saves to S3
+// @Summary HandleObjectArchiveUploadMultipart uploads a tar archive.  It saves to IPFS, creates thumbs, then saves to S3
 // @Accept mpfd
 // @Produce json
 // @Param App-Key header string true "Application key header"
@@ -550,14 +550,14 @@ func indexObjectString(cid string, body string) error {
 		var arc models.Arc
 		res := models.Db.Where("cid = ?", spec.ArcSelector.Cid).First(&arc)
 		if res.Error != nil {
-			return fmt.Errorf("cannot find arc %v", res.Error)
+			return fmt.Errorf("cannot find arc %s %v", spec.ArcSelector.Cid, res.Error)
 		}
 
 		// find pin
 		var pin models.Pin
 		res = models.Db.Where("cid = ?", spec.PinSelector.Cid).First(&pin)
 		if res.Error != nil {
-			return fmt.Errorf("cannot find pin %v", res.Error)
+			return fmt.Errorf("cannot find pin %s %v", spec.PinSelector.Cid, res.Error)
 		}
 
 		// add pinned arc

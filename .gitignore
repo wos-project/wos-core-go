@@ -2,3 +2,4 @@ wos-core-go
 app/docs/**
 jq
 config.yaml
+docs

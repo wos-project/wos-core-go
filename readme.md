@@ -34,9 +34,10 @@ psql -d wos_dev
 
 CREATE USER wos_user WITH PASSWORD 'insecure';
 GRANT ALL PRIVILEGES ON DATABASE wos_dev TO wos_user;
+CREATE EXTENSION postgis;
 ```
 
-### Mac Postgis install (not presently needed, will need in the future) ###
+### Mac Postgis install ###
 ```Console
 brew install postgis
 psql -d wos_dev
@@ -61,13 +62,13 @@ GO111MODULE=on
 swag init -g app/main.go
 
 # build for mac
-go build ./app
+go build -o wos-core-go ./app
 
 # build for linux
 env GOOS=linux GOARCH=amd64 go build -o wos-core-go ./app
 
 # run
-./wos-core-go -c app/config.yaml
+./wos-core-go -config app/config.yaml
 ```
 
 ## Let's encrypt ##
@@ -96,7 +97,7 @@ go test -logtostderr ./app/...
 ```Console
 swag init
 go build
-./wos-core-go
+./wos-core-go -config app/config.yaml
 ```
 Browse http://localhost:8080/swagger/index.html and enter credentials in config.yaml swagger.users section
 
