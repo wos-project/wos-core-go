@@ -1,6 +1,6 @@
 # wos-core-go README #
 
-wos-core-go is a Golang CDN, cache, and geo index running over IPFS for augmented reality objects stored in the world.  wos-core-api hosts a RESTful API supporting the [wos-protocol](https://github.com/wos-project/wos-protocol).  See swagger docs for interactive help on using the protocol.  wos-core-api requires access to an IPFS node.  v1 wos-core-go supports a variety of AR object types, including ARCs [arc-spec](https://github.com/wos-project/arc-spec), pins, and pinned arcs.
+wos-core-go is a Golang CDN, cache, and geo index running over IPFS for augmented reality objects stored in the world.  wos-core-api hosts a RESTful API supporting the [wos-protocol](https://github.com/wos-project/wos-protocol-spec).  See swagger docs for interactive help on using the protocol.  wos-core-api requires access to an IPFS node.  v1 wos-core-go supports a variety of AR object types, including ARCs [arc-spec](https://github.com/wos-project/arc-spec), pins, and pinned arcs.
 
 wos-core-go creates objects in IPFS with S3 caching and thumbnail creation.  Use S3 for fast file access to files you've stored in IPFS.  Use RESTFful API to find objects in the world.
 
