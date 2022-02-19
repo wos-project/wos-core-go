@@ -4,7 +4,6 @@ import (
 	"archive/tar"
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -126,15 +125,6 @@ type respObjectSearch struct {
 
 type respBatchUploadBegin struct {
 	SessionID string `json:"sessionId"`
-}
-
-func x(r io.Reader) {
-
-	tarReader := tar.NewReader(r)
-
-	if tarReader != nil {
-
-	}
 }
 
 // HandleObjectArchiveUploadMultipart godoc
