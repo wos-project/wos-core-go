@@ -95,8 +95,8 @@ go test -logtostderr ./app/...
 
 ## Swagger ##
 ```Console
-swag init
-go build
+swag init -g app/main.go
+go build -o wos-core-go ./app
 ./wos-core-go -config app/config.yaml
 ```
 Browse http://localhost:8080/swagger/index.html and enter credentials in config.yaml swagger.users section
