@@ -3,3 +3,4 @@ app/docs/**
 jq
 config.yaml
 docs
+.DS_Store
