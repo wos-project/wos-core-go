@@ -68,6 +68,10 @@ func SetupRouter() *gin.Engine {
 	v.PUT("/object/batchUpload/:sessionId", validateAPIKey(), HandleObjectBatchUploadEnd)
 	v.GET("/layers", HandleLayersGet)
 
+	v.POST("/transaction/enqueue", validateAPIKey(), HandleTransactionEnqueue)
+	v.GET("/transaction/queue", validateAPIKey(), HandleTransactionEnqueue)
+	v.POST("/transaction/cb", validateAPIKey(), HandleTransactionQueueCallback)
+
 	// setup media storage static content route
 	localPath := viper.GetString("media.schemes.localSimple.localPath")
 	if localPath != "" {
