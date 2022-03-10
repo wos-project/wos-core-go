@@ -26,6 +26,15 @@ var (
 				return err
 			},
 		},
+		{
+			ID: "20220308000001",
+			Migrate: func(tx *gorm.DB) error {
+				err := tx.AutoMigrate(
+					&Transaction{},
+				)
+				return err
+			},
+		},
 	}
 
 	// Db is the global database reference
@@ -38,6 +47,7 @@ var (
 		"media_upload",
 		"place",
 		"layer",
+		"transaction",
 	}
 )
 

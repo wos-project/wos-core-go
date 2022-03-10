@@ -89,6 +89,12 @@ mode: debug
 schedules:
   cleanupOldTempFiles:
     cron: "13 */4 * * *"
+services:
+  sync:
+    questori:
+      apiKey: insecure
+      cron: "*/10 * * * * *"
+      errorRetrySeconds: 20
 swagger:
   users:
     swaggy: insecure-set-me

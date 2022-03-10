@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -15,8 +16,8 @@ import (
 )
 
 type reqTransactionEnqueue struct {
-	Kind string                 `json:"kind"`
-	Spec map[string]interface{} `json:"spec"`
+	Kind string      `json:"kind"`
+	Spec interface{} `json:"spec"`
 }
 
 type reqTransactionEnqueueSpecAirdropErc721 struct {
@@ -67,7 +68,7 @@ type reqTransactionQueuedItemCallback struct {
 }
 
 // HandleTransactionEnqueue godoc
-// @Summary HandleTransactionEnqueue enqueues a transaction
+// @Summary HandleTransactionEnqueue enqueues a transaction for the transactor
 // @Accept mpfd
 // @Produce json
 // @Param App-Key header string true "Application key header"
@@ -104,11 +105,13 @@ func HandleTransactionEnqueue(c *gin.Context) {
 			return
 		}
 		tx = models.Transaction{
+			Kind:          "erc20",
 			Uid:           erc20.Uid,
 			WalletAddr:    erc20.WalletAddr,
 			WalletKind:    erc20.WalletKind,
 			TokenQuantity: erc20.Quantity,
 			CallbackUri:   erc20.CallbackUri,
+			Status:        models.TRANSACTION_STATUS_PENDING,
 		}
 	} else if request.Kind == "erc721" {
 		var erc721 reqTransactionEnqueueSpecAirdropErc721
@@ -119,11 +122,13 @@ func HandleTransactionEnqueue(c *gin.Context) {
 			return
 		}
 		tx = models.Transaction{
+			Kind:        "erc721",
 			Uid:         erc721.Uid,
 			WalletAddr:  erc721.WalletAddr,
 			WalletKind:  erc721.WalletKind,
 			IpfsCid:     erc721.IpfsCid,
 			CallbackUri: erc721.CallbackUri,
+			Status:      models.TRANSACTION_STATUS_PENDING,
 		}
 	} else {
 		glog.Errorf("tx kind not supported %s", request.Kind)
@@ -139,7 +144,7 @@ func HandleTransactionEnqueue(c *gin.Context) {
 }
 
 // HandleTransactionQueueGet godoc
-// @Summary HandleTransactionQueueGet gets an item from the transaction queue for the transactor
+// @Summary HandleTransactionQueueGet gets an item from the transaction queue from the transactor
 // @Accept mpfd
 // @Produce json
 // @Param App-Key header string true "Application key header"
@@ -152,10 +157,21 @@ func HandleTransactionEnqueue(c *gin.Context) {
 func HandleTransactionQueueGet(c *gin.Context) {
 
 	var tx models.Transaction
-	resp := models.Db.Where("status = 'pending'").Order("created_at").First(&tx)
+	resp := models.Db.Where("status = 1").Order("created_at").First(&tx)
 	if resp.RowsAffected == 0 {
 		c.JSON(201, "")
 		return
+	}
+
+	hostKey := "host.hosts." + viper.GetString("host.mode")
+	host := viper.GetString(hostKey + ".domain") 
+	if !(viper.GetInt(hostKey + ".port") == 80 || viper.GetInt(hostKey + ".port") == 443) {
+		host += ":" + viper.GetString(hostKey + ".port")
+	}
+	cb := &url.URL{
+		Scheme: viper.GetString(hostKey + ".scheme"),
+		Host:   host,
+		Path:   "v1/transaction/cb",
 	}
 
 	item := respTransactionQueuedItem{
@@ -164,21 +180,22 @@ func HandleTransactionQueueGet(c *gin.Context) {
 	if tx.Kind == "erc721" {
 
 		erc721 := respTransactionQueuedItemAirdropErc721{
-			Uid:        tx.Uid,
-			WalletAddr: tx.WalletAddr,
-			WalletKind: tx.WalletKind,
-			IpfsCid:    tx.IpfsCid,
+			Uid:         tx.Uid,
+			WalletAddr:  tx.WalletAddr,
+			WalletKind:  tx.WalletKind,
+			IpfsCid:     tx.IpfsCid,
+			CallbackUri: cb.String(),
 		}
-
 		item.Spec = &erc721
 
 	} else if tx.Kind == "erc20" {
 
 		erc20 := respTransactionQueuedItemAirdropErc20{
-			Uid:        tx.Uid,
-			WalletAddr: tx.WalletAddr,
-			WalletKind: tx.WalletKind,
-			Quantity:   tx.TokenQuantity,
+			Uid:         tx.Uid,
+			WalletAddr:  tx.WalletAddr,
+			WalletKind:  tx.WalletKind,
+			Quantity:    tx.TokenQuantity,
+			CallbackUri: cb.String(),
 		}
 		item.Spec = &erc20
 
@@ -230,6 +247,7 @@ func HandleTransactionQueueCallback(c *gin.Context) {
 	tx.IpfsCid = request.IpfsCid
 	tx.TokenQuantity = request.TokenQuantity
 	tx.Status = models.TRANSACTION_STATUS_PENDING_CB
+	tx.ContractAddr = request.ContractAddr
 
 	// TODO: make this a cron job with retries
 

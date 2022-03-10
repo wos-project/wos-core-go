@@ -30,6 +30,7 @@ type Transaction struct {
 	TokenQuantity int       `json:"column:token_quantity"`
 	Metadata      JSONMap   `gorm:"column:metadata"`
 	Cost          string    `json:"column:cost"`
+	ContractAddr  string    `json:"column:contract_addr"`
 	ErrorCount    int       `json:"column:error_count"`
 	LastErrorAt   time.Time `json:"column:last_error_at"`
 	LastError     string    `json:"column:last_error"`

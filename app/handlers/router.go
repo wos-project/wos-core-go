@@ -69,7 +69,7 @@ func SetupRouter() *gin.Engine {
 	v.GET("/layers", HandleLayersGet)
 
 	v.POST("/transaction/enqueue", validateAPIKey(), HandleTransactionEnqueue)
-	v.GET("/transaction/queue", validateAPIKey(), HandleTransactionEnqueue)
+	v.GET("/transaction/queue", validateAPIKey(), HandleTransactionQueueGet)
 	v.POST("/transaction/cb", validateAPIKey(), HandleTransactionQueueCallback)
 
 	// setup media storage static content route
