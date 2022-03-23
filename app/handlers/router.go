@@ -67,6 +67,7 @@ func SetupRouter() *gin.Engine {
 	v.POST("/object/batchUpload/multipart/:sessionId", validateAPIKey(), HandleObjectBatchUploadMultipart)
 	v.PUT("/object/batchUpload/:sessionId", validateAPIKey(), HandleObjectBatchUploadEnd)
 	v.GET("/layers", HandleLayersGet)
+	v.GET("/contract/:caddr", HandleGetContract)
 
 	v.POST("/transaction/enqueue", validateAPIKey(), HandleTransactionEnqueue)
 	v.GET("/transaction/queue", validateAPIKey(), HandleTransactionQueueGet)

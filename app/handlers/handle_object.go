@@ -45,7 +45,10 @@ type reqObject struct {
 	Spec interface{} `json:"spec" binding:"required"`
 }
 
-type specArc struct{} // TODO
+type specArc struct {
+	CoverImageUri string `json:"coverImageUri"`
+	// TODO: fill in
+} 
 type specPin struct{} // TODO
 type specPinnedArc struct {
 	ArcSelector struct {
@@ -504,6 +507,15 @@ func indexObjectString(cid string, body string) error {
 		arc.Description = request.Metadata.Description
 		arc.CreatedAtInner = request.Metadata.CreatedAt
 		arc.Body.UnmarshalJSON([]byte(body))
+
+		specBytes, err := json.Marshal(request.Spec)
+		if err == nil {
+			var sa specArc
+			err = json.Unmarshal(specBytes, &sa)
+			if err == nil {
+				arc.CoverImageUri = sa.CoverImageUri
+			}
+		}
 
 		res := models.Db.Save(&arc)
 		if res.Error != nil {
