@@ -10,9 +10,9 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
-	"path/filepath"
 
 	"github.com/dhowden/tag"
 	"github.com/disintegration/imaging"
@@ -45,6 +45,10 @@ const (
 	MediaFormatDetailVideoMp4 = 3001 // mp4
 	MediaFormatDetailVideoMov = 3002 // mov
 
+	MediaFormatMetadata           = 4000
+	MediaFormatDetailMetadataJson = 4001
+	MediaFormatDetailMetadataYaml = 4002
+
 	Thumb_p100  = "p100"
 	Thumb_p1080 = "p1080"
 	Size_Actual = "actual"
@@ -66,6 +70,8 @@ func init() {
 		"mov":  MediaFormatDetailVideoMov,
 		"MOV":  MediaFormatDetailVideoMov,
 		"heic": MediaFormatDetailImageHeic,
+		"json": MediaFormatDetailMetadataJson,
+		"yaml": MediaFormatDetailMetadataYaml,
 	}
 
 	mapThumbnailName2Size = map[string]int{
@@ -291,7 +297,7 @@ func AddSuffixToBasename(fullpath string, suffix string) string {
 }
 
 // CreateAltSizes creates thumbnails of mediaPath, saves thumbnails, and returns paths and names of uploaded images.
-// Thumbnail size is set to max of width or height.  
+// Thumbnail size is set to max of width or height.
 // mediaPath is the path to the file, altName is an alternate name that gets thumbnail suffixes added to it
 func CreateAltSizes(mediaPath string, altName string) (imagePathsThumbs []string, altNameThumbs []string, err error) {
 

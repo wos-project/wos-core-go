@@ -16,6 +16,10 @@ type respContract struct {
 	Description   string `json:"description"`
 	CoverImageUri string `json:"coverImageUri"`
 	ContractAddr  string `json:"contractAddr"`
+	Location      struct {
+		Lat float64 `json:"lat"`
+		Lon float64 `json:"lon"`
+	} `json:"location"`
 }
 
 // HandleGetContract godoc
@@ -62,6 +66,14 @@ func HandleGetContract(c *gin.Context) {
 		return
 	}
 
+	// get pin
+	var pin models.Pin
+	resp = models.Db.Where("id = ?", pa.PinId).First(&pin)
+	if resp.RowsAffected == 0 {
+		c.JSON(451, "")
+		return
+	}
+
 	con := respContract{
 		Uid:           tx.Uid,
 		WalletAddr:    tx.WalletAddr,
@@ -71,6 +83,13 @@ func HandleGetContract(c *gin.Context) {
 		Description:   pa.Description,
 		CoverImageUri: arc.CoverImageUri,
 		ContractAddr:  tx.ContractAddr,
+		Location: struct {
+			Lat float64 `json:"lat"`
+			Lon float64 `json:"lon"`
+		}{
+			Lat: pin.Location.Lat,
+			Lon: pin.Location.Lon,
+		},
 	}
 
 	c.JSON(200, con)
