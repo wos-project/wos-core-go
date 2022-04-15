@@ -92,7 +92,17 @@ func ExpandTarReader(r io.Reader, expandDirPath string) error {
 				return fmt.Errorf("ExtractTarGz: Mkdir() failed: %s", err.Error())
 			}
 		case tar.TypeReg:
-			outFile, err := os.Create(path.Join(expandDirPath, header.Name))
+			// create directory if it doesn't exist
+			p := path.Join(expandDirPath, header.Name)
+			d := filepath.Dir(p)
+			_, err = os.Stat(d)
+			if err != nil {
+				err = os.MkdirAll(d, 0777)
+				if err != nil {
+					return fmt.Errorf("Cannot mkdirall %s %s", d, err.Error())
+				}
+			}
+			outFile, err := os.Create(p)
 			if err != nil {
 				return fmt.Errorf("ExtractTarGz: Create() failed: %s", err.Error())
 			}
@@ -138,7 +148,17 @@ func ExpandTarFile(tarFilePath string, expandDirPath string) error {
 				return fmt.Errorf("ExtractTarGz: Mkdir() failed: %s", err.Error())
 			}
 		case tar.TypeReg:
-			outFile, err := os.Create(path.Join(expandDirPath, header.Name))
+			// create directory if it doesn't exist
+			p := path.Join(expandDirPath, header.Name)
+			d := filepath.Dir(p)
+			_, err = os.Stat(d)
+			if err != nil {
+				err = os.MkdirAll(d, 0777)
+				if err != nil {
+					return fmt.Errorf("Cannot mkdirall %s %s", d, err.Error())
+				}
+			}
+			outFile, err := os.Create(p)
 			if err != nil {
 				return fmt.Errorf("ExtractTarGz: Create() failed: %s", err.Error())
 			}
