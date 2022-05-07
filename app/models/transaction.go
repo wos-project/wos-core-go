@@ -26,7 +26,7 @@ type Transaction struct {
 	WalletAddr    string    `json:"column:wallet_addr" binding:"required"`
 	WalletKind    string    `json:"column:wallet_kind" binding:"required"`
 	CallbackUri   string    `json:"column:callback_uri" binding:"required"`
-	IpfsCid       string    `json:"column:ipfs_cid"`
+	IpfsCid       string    `json:"column:ipfs_cid"`  // TODO: need index
 	TokenQuantity int       `json:"column:token_quantity"`
 	Metadata      JSONMap   `gorm:"column:metadata"`
 	Cost          string    `json:"column:cost"`

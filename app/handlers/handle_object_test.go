@@ -103,7 +103,7 @@ func TestObjects(t *testing.T) {
 	assert.True(t, len(obj.Cid) > 0)
 
 	// search
-	w = PerformRequest(router, "GET", "/object/search", `{"matchExpressions": [ {"key": "name", "operator": "equal", "values": ["example_mp4"]} ]}`)
+	w = PerformRequest(router, "POST", "/object/search", `{"matchExpressions": [ {"key": "name", "operator": "equal", "values": ["example_mp4"]} ]}`)
 	assert.Equal(t, http.StatusOK, w.Code)
 	var search respObjectSearch
 	err = json.Unmarshal([]byte(w.Body.String()), &search)
@@ -170,10 +170,12 @@ func TestObjects(t *testing.T) {
 	assert.True(t, len(obj.Cid) > 0)
 
 	// search pinned arc
-	w = PerformRequest(router, "GET", "/object/search", `{"matchExpressions": [ {"key": "location", "operator": "equal", "values": ["41.5", "-71.5"]} ]}`)
+	w = PerformRequest(router, "POST", "/object/search", `{"matchExpressions": [ {"key": "location", "operator": "equal", "values": ["41.5", "-71.5"]} ]}`)
 	assert.Equal(t, http.StatusOK, w.Code)
 	err = json.Unmarshal([]byte(w.Body.String()), &search)
 	assert.Equal(t, 1, len(search.Results))
+	assert.Equal(t, "https://us-east-1.amazonaws.com/worldos//media/example-cover-image.jpg", search.Results[0].CoverImageUri)
+	assert.Equal(t, "QmXN8whBDCKTDcPUBb5VJ1QjbcfJv7uGenQ7jFFoM6qxSv", search.Results[0].IpfsCid)
 
 	// batch upload
 	w = PerformRequest(router, "POST", "/object/batchUpload", "")

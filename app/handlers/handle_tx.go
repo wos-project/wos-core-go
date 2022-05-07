@@ -130,6 +130,7 @@ func HandleTransactionEnqueue(c *gin.Context) {
 			CallbackUri: erc721.CallbackUri,
 			Status:      models.TRANSACTION_STATUS_PENDING,
 		}
+		glog.Infof("enqueuing tx txUid=%s walletAddr=%s ipfsCid=%s", erc721.Uid,  erc721.WalletAddr, erc721.IpfsCid)
 	} else {
 		glog.Errorf("tx kind not supported %s", request.Kind)
 		c.JSON(400, gin.H{"error": ""})
@@ -179,6 +180,8 @@ func HandleTransactionQueueGet(c *gin.Context) {
 	}
 	if tx.Kind == "erc721" {
 
+		glog.Infof("erc721 response tx Uid=%s ipfs=%s", tx.Uid, tx.IpfsCid)
+
 		erc721 := respTransactionQueuedItemAirdropErc721{
 			Uid:         tx.Uid,
 			WalletAddr:  tx.WalletAddr,
@@ -204,6 +207,9 @@ func HandleTransactionQueueGet(c *gin.Context) {
 		c.JSON(400, gin.H{"error": ""})
 		return
 	}
+
+	ib, _ := json.Marshal(item)
+	glog.Infof("tx queue get %s", string(ib))
 
 	// mark transaction as in-process
 	tx.Status = models.TRANSACTION_STATUS_PENDING

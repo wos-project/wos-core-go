@@ -12,6 +12,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"errors"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -305,5 +306,19 @@ func (s *S3_1Driver) GetExpiringURL(key string) (string, http.Header, error) {
 	glog.V(2).Infof("created URL to S3 media %s", url)
 
 	return url, headers, nil
+}
+
+func (s *S3_1Driver)GetFileUrl(key string) (string, error) {
+
+	region := viper.GetString("media.schemes.s3_1.region")
+	if region == "" {
+		return "", errors.New("region not set")
+	}
+	bucket := viper.GetString("media.schemes.s3_1.bucket")
+	if bucket == "" {
+		return "", errors.New("bucket not set")
+	}
+
+	return fmt.Sprintf("https://%s.s3.amazonaws.com/%s/%s", bucket, key), nil
 }
 

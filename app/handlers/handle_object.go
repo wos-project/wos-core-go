@@ -48,7 +48,7 @@ type reqObject struct {
 type specArc struct {
 	CoverImageUri string `json:"coverImageUri"`
 	// TODO: fill in
-} 
+}
 type specPin struct{} // TODO
 type specPinnedArc struct {
 	ArcSelector struct {
@@ -85,6 +85,10 @@ type respObjectSearchItem struct {
 		Lat float64 `json:"lat"`
 		Lon float64 `json:"lon"`
 	}
+
+	IpfsCid      string `json:"ipfsCid"`
+	ContractAddr string `json:"contractAddr"`
+	WalletAddr   string `json:"walletAddr"`
 }
 
 func (si *respObjectSearchItem) MarshalFromArc(m *models.Arc) {
@@ -102,7 +106,6 @@ func (si *respObjectSearchItem) MarshalFromPin(m *models.Pin) {
 	si.CreatedAt = m.CreatedAtInner
 	si.Owner.Id = m.OwnerUid
 	si.Owner.Provider = m.OwnerProvider
-	si.CoverImageUri = m.CoverImageUri
 }
 
 func (si *respObjectSearchItem) MarshalFromPinnedArc(m *ArcAndPin) {
@@ -111,15 +114,39 @@ func (si *respObjectSearchItem) MarshalFromPinnedArc(m *ArcAndPin) {
 	si.CreatedAt = m.Arc.CreatedAtInner
 	si.Owner.Id = m.Arc.OwnerUid
 	si.Owner.Provider = m.Arc.OwnerProvider
-	si.CoverImageUri = m.Arc.CoverImageUri
+	uri, _ := utils.S3.GetFileUrl(m.Arc.CoverImageUri)
+	si.CoverImageUri = uri
 
 	si.PinLocation.Lat = m.Pin.Location.Lat
 	si.PinLocation.Lon = m.Pin.Location.Lon
 }
 
+func (si *respObjectSearchItem) MarshalFromPinnedArcTransaction(m *ArcAndPinTransaction) {
+	si.Name = m.Arc.Name
+	si.Description = m.Arc.Description
+	si.CreatedAt = m.Arc.CreatedAtInner
+	si.Owner.Id = m.Arc.OwnerUid
+	si.Owner.Provider = m.Arc.OwnerProvider
+	uri, _ := utils.S3.GetFileUrl(m.Arc.CoverImageUri)
+	si.CoverImageUri = uri
+	si.IpfsCid = m.Arc.Cid
+
+	si.PinLocation.Lat = m.Pin.Location.Lat
+	si.PinLocation.Lon = m.Pin.Location.Lon
+
+	si.WalletAddr = m.Transaction.WalletAddr
+	si.ContractAddr = m.Transaction.ContractAddr
+}
+
 type ArcAndPin struct {
 	models.Arc
 	models.Pin
+}
+
+type ArcAndPinTransaction struct {
+	models.Arc
+	models.Pin
+	models.Transaction
 }
 
 type respObjectSearch struct {
@@ -394,7 +421,7 @@ func HandleObjectIndexGet(c *gin.Context) {
 // @Failure 400 {string} error "Request params wrong"
 // @Failure 401 {string} error "Unauthorized"
 // @Failure 500 {string} error "Internal error"
-// @Router /object/search [get]
+// @Router /object/search [post]
 func HandleObjectSearch(c *gin.Context) {
 
 	// marshall to struct
@@ -453,23 +480,25 @@ func HandleObjectSearch(c *gin.Context) {
 			return
 		}
 
-		var pas []ArcAndPin
+		// NOTE: using left join for transactions here, should not use this b/c will return just IPFS objects
+		var apt []ArcAndPinTransaction
 		res := models.Db.
 			Joins("JOIN pins p on p.id = pinned_arcs.pin_id").
 			Joins("JOIN arcs a on a.id = pinned_arcs.arc_id").
-			Select("p.*, a.*").
+			Joins("LEFT JOIN transactions t on t.ipfs_cid = pinned_arcs.cid").
+			Select("p.*, a.*, t.*").
 			Where(fmt.Sprintf("ST_DWithin(p.location, 'SRID=4326;POINT(%f %f)'::geography, %f)", lon, lat, 10.0)).
 			Table("pinned_arcs").
-			Find(&pas)
+			Find(&apt)
 		if res.Error != nil {
 			glog.Errorf("search query error %v", res.Error)
 			c.JSON(500, gin.H{"error": ""})
 			return
 		}
 
-		resp.Results = make([]respObjectSearchItem, len(pas))
-		for i, a := range pas {
-			resp.Results[i].MarshalFromPinnedArc(&a)
+		resp.Results = make([]respObjectSearchItem, len(apt))
+		for i, a := range apt {
+			resp.Results[i].MarshalFromPinnedArcTransaction(&a)
 		}
 	}
 

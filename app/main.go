@@ -8,7 +8,6 @@ import (
 
 	"github.com/gin-gonic/autotls"
 
-	"github.com/gin-contrib/cors"
 	"github.com/golang/glog"
 	"github.com/spf13/viper"
 	ginglog "github.com/szuecs/gin-glog"
@@ -51,8 +50,6 @@ func main() {
 
 	r := handlers.SetupRouter()
 	r.Use(ginglog.Logger(3 * time.Second))
-
-	r.Use(cors.Default())
 
 	docs.SwaggerInfo.BasePath = "/" + viper.GetString("apiVersion")
 	docs.SwaggerInfo.Version = viper.GetString("apiVersion")

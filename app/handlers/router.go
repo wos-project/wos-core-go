@@ -4,6 +4,7 @@ import (
 	"path"
 
 	"github.com/golang/glog"
+	"github.com/gin-contrib/cors"
 
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -44,6 +45,8 @@ func validateAPIKey() gin.HandlerFunc {
 // SetupRouter creates the Gin router
 func SetupRouter() *gin.Engine {
 	r := gin.New()
+	// allow all origins
+	r.Use(cors.Default())
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
 
@@ -62,7 +65,7 @@ func SetupRouter() *gin.Engine {
 	v.GET("/object/archive/:cid", HandleObjectArchiveGet)
 	v.POST("/object/index", validateAPIKey(), HandleObjectIndexPost)
 	v.GET("/object/:cid/index", HandleObjectIndexGet)
-	v.GET("/object/search", HandleObjectSearch)
+	v.POST("/object/search", HandleObjectSearch)
 	v.POST("/object/batchUpload", validateAPIKey(), HandleObjectBatchUploadBegin)
 	v.POST("/object/batchUpload/multipart/:sessionId", validateAPIKey(), HandleObjectBatchUploadMultipart)
 	v.PUT("/object/batchUpload/:sessionId", validateAPIKey(), HandleObjectBatchUploadEnd)
