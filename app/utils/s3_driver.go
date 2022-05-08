@@ -84,6 +84,7 @@ func (s *S3_1Driver) UploadDirectory(localDirPath string, cid string) error {
 		// remove root folder, separate dir from filename, join with cid
 		relativePath := p[len(localDirPath):]
 		key := path.Join(cid, relativePath)
+		glog.Infof("save file to S3 key=%s path=%s", key, p)
 		err = s.Upload(p, key)
 		if err != nil {
 			return err
@@ -310,15 +311,11 @@ func (s *S3_1Driver) GetExpiringURL(key string) (string, http.Header, error) {
 
 func (s *S3_1Driver)GetFileUrl(key string) (string, error) {
 
-	region := viper.GetString("media.schemes.s3_1.region")
-	if region == "" {
-		return "", errors.New("region not set")
-	}
 	bucket := viper.GetString("media.schemes.s3_1.bucket")
 	if bucket == "" {
 		return "", errors.New("bucket not set")
 	}
 
-	return fmt.Sprintf("https://%s.s3.amazonaws.com/%s/%s", bucket, key), nil
+	return fmt.Sprintf("https://%s.s3.amazonaws.com/%s", bucket, key), nil
 }
 

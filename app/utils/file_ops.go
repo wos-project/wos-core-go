@@ -88,6 +88,7 @@ func ExpandTarReader(r io.Reader, expandDirPath string) error {
 
 		switch header.Typeflag {
 		case tar.TypeDir:
+			glog.Infof("creating dir1 %s", header.Name)
 			if err := os.Mkdir(path.Join(expandDirPath, header.Name), 0755); err != nil {
 				return fmt.Errorf("ExtractTarGz: Mkdir() failed: %s", err.Error())
 			}
@@ -97,11 +98,13 @@ func ExpandTarReader(r io.Reader, expandDirPath string) error {
 			d := filepath.Dir(p)
 			_, err = os.Stat(d)
 			if err != nil {
+				glog.Infof("creating dir2 %s", d)
 				err = os.MkdirAll(d, 0777)
 				if err != nil {
 					return fmt.Errorf("Cannot mkdirall %s %s", d, err.Error())
 				}
 			}
+			glog.Infof("creating file %s", p)
 			outFile, err := os.Create(p)
 			if err != nil {
 				return fmt.Errorf("ExtractTarGz: Create() failed: %s", err.Error())

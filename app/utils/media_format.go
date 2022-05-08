@@ -345,6 +345,8 @@ func CreateAltSizes(mediaPath string, altName string) (imagePathsThumbs []string
 
 		altNameThumb := path.Join(AddSuffixToBasename(altName, name))
 		altNameThumbs = append(altNameThumbs, altNameThumb)
+
+		glog.Infof("created alternate thumb %s", imagePathThumb)
 	}
 
 	return

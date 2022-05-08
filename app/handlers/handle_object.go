@@ -49,7 +49,33 @@ type specArc struct {
 	CoverImageUri string `json:"coverImageUri"`
 	// TODO: fill in
 }
-type specPin struct{} // TODO
+type specPin struct{
+	World struct {
+		Uri string `json:"uri"`
+	} `json:"world"`
+	Pinning struct {
+		Kind string      `json:"kind"`
+		Spec interface{} `json:"spec"`
+	} `json:"pinning"`
+}
+// PinSpecPointSpec defines a single point pin
+type PinSpecPointSpec struct {
+	SRID  int         `json:"srid"` //spatial reference identifier
+	Point interface{} `json:"point"`
+}
+
+// PinSpecPathSpec defines a point path
+type PinSpecPathSpec struct {
+	SRID   int         `json:"srid"` //spatial reference identifier
+	Points interface{} `json:"points"`
+}
+
+// GeoPoint defines a single world geodic point
+type GeoPoint struct {
+	Lat  float64 `json:"lat"`
+	Lon  float64 `json:"lon"`
+	Elev float64 `json:"elev"`
+}
 type specPinnedArc struct {
 	ArcSelector struct {
 		Cid string `json:"cid" binding:"required"`
@@ -127,7 +153,7 @@ func (si *respObjectSearchItem) MarshalFromPinnedArcTransaction(m *ArcAndPinTran
 	si.CreatedAt = m.Arc.CreatedAtInner
 	si.Owner.Id = m.Arc.OwnerUid
 	si.Owner.Provider = m.Arc.OwnerProvider
-	uri, _ := utils.S3.GetFileUrl(m.Arc.CoverImageUri)
+	uri, _ := utils.S3.GetFileUrl(path.Join(m.Arc.Cid, m.Arc.CoverImageUri))
 	si.CoverImageUri = uri
 	si.IpfsCid = m.Arc.Cid
 
@@ -185,7 +211,8 @@ func HandleObjectArchiveUploadMultipart(c *gin.Context) {
 		c.JSON(500, gin.H{"error": ""})
 		return
 	}
-	defer os.RemoveAll(tempDirPath)
+	// TODO: debugging
+	//defer os.RemoveAll(tempDirPath)
 
 	// expand tar
 	mf, err := file.Open()
@@ -487,7 +514,7 @@ func HandleObjectSearch(c *gin.Context) {
 			Joins("JOIN arcs a on a.id = pinned_arcs.arc_id").
 			Joins("LEFT JOIN transactions t on t.ipfs_cid = pinned_arcs.cid").
 			Select("p.*, a.*, t.*").
-			Where(fmt.Sprintf("ST_DWithin(p.location, 'SRID=4326;POINT(%f %f)'::geography, %f)", lon, lat, 10.0)).
+			Where(fmt.Sprintf("ST_DWithin(p.location, 'SRID=4326;POINT(%f %f)'::geography, %f)", lon, lat, 10000.0)).
 			Table("pinned_arcs").
 			Find(&apt)
 		if res.Error != nil {
@@ -523,6 +550,7 @@ func indexObjectString(cid string, body string) error {
 	if err != nil {
 		return fmt.Errorf("cannot unmarshall object index post %v", err)
 	}
+	glog.Infof("indexObjectString %s", body)
 
 	// determine type and insert into arc, pin, pinned_arc
 	switch request.Kind {

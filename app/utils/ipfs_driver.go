@@ -61,7 +61,7 @@ func (i *IPFS_Driver) UploadDirectory(localDirPath string) (cid string, err erro
 	}
 	i.sh.Pin(cid)
 
-	glog.Infof("uploaded directory %s\n", cid)
+	glog.Infof("uploaded directory IPFS files to cid %s\n", cid)
 
 	return cid, err
 }
