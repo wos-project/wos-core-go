@@ -13,7 +13,7 @@ type Object struct {
 	OwnerProvider  string    `gorm:"column:owner_provider; index" binding:"required"`
 	Name           string    `gorm:"column:name; index" binding:"required"`
 	Description    string    `gorm:"description; index"`
-	CoverImageUri  string    `gorm:"coverImageUri"`
+	CoverImageUri  string    `gorm:"cover_image_uri"`
 	CreatedAtInner time.Time `gorm:"column:created_at_inner"`
 	Body           JSONMap   `gorm:"column:body"`
 	Files          JSONMap   `gorm:"column:files"`

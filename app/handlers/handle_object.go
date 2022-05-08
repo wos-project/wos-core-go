@@ -49,7 +49,7 @@ type specArc struct {
 	CoverImageUri string `json:"coverImageUri"`
 	// TODO: fill in
 }
-type specPin struct{
+type specPin struct {
 	World struct {
 		Uri string `json:"uri"`
 	} `json:"world"`
@@ -58,6 +58,7 @@ type specPin struct{
 		Spec interface{} `json:"spec"`
 	} `json:"pinning"`
 }
+
 // PinSpecPointSpec defines a single point pin
 type PinSpecPointSpec struct {
 	SRID  int         `json:"srid"` //spatial reference identifier
@@ -147,21 +148,21 @@ func (si *respObjectSearchItem) MarshalFromPinnedArc(m *ArcAndPin) {
 	si.PinLocation.Lon = m.Pin.Location.Lon
 }
 
-func (si *respObjectSearchItem) MarshalFromPinnedArcTransaction(m *ArcAndPinTransaction) {
-	si.Name = m.Arc.Name
-	si.Description = m.Arc.Description
-	si.CreatedAt = m.Arc.CreatedAtInner
-	si.Owner.Id = m.Arc.OwnerUid
-	si.Owner.Provider = m.Arc.OwnerProvider
-	uri, _ := utils.S3.GetFileUrl(path.Join(m.Arc.Cid, m.Arc.CoverImageUri))
+func (si *respObjectSearchItem) MarshalFromPinnedArcTransaction(m *PinnedArcTransaction) {
+	si.Name = m.Name
+	si.Description = m.Description
+	si.CreatedAt = m.CreatedAt
+	si.Owner.Id = m.OwnerId
+	si.Owner.Provider = m.OwnerProvider
+	uri, _ := utils.S3.GetFileUrl(path.Join(m.ArcCid, m.ArcCoverImageUri))
 	si.CoverImageUri = uri
-	si.IpfsCid = m.Arc.Cid
+	si.IpfsCid = m.PinnedArcCid
 
-	si.PinLocation.Lat = m.Pin.Location.Lat
-	si.PinLocation.Lon = m.Pin.Location.Lon
+	si.PinLocation.Lat = m.Location.Lat
+	si.PinLocation.Lon = m.Location.Lon
 
-	si.WalletAddr = m.Transaction.WalletAddr
-	si.ContractAddr = m.Transaction.ContractAddr
+	si.WalletAddr = m.WalletAddr
+	si.ContractAddr = m.ContractAddr
 }
 
 type ArcAndPin struct {
@@ -169,10 +170,18 @@ type ArcAndPin struct {
 	models.Pin
 }
 
-type ArcAndPinTransaction struct {
-	models.Arc
-	models.Pin
-	models.Transaction
+type PinnedArcTransaction struct {
+	Name             string          `gorm:"column:name"`
+	Description      string          `gorm:"description"`
+	CreatedAt        time.Time       `gorm:"column:created_at_inner"`
+	OwnerId          string          `gorm:"owner_uid"`
+	OwnerProvider    string          `gorm:"owner_provider"`
+	ArcCid           string          `gorm:"arc_cid"`
+	ArcCoverImageUri string          `gorm:"arc_cover_image_uri"`
+	PinnedArcCid     string          `gorm:"pinned_arc_cid"`
+	WalletAddr       string          `gorm:"wallet_addr"`
+	ContractAddr     string          `gorm:"contract_addr"`
+	Location         models.PointGeo `gorm:"column:location"`
 }
 
 type respObjectSearch struct {
@@ -508,13 +517,13 @@ func HandleObjectSearch(c *gin.Context) {
 		}
 
 		// NOTE: using left join for transactions here, should not use this b/c will return just IPFS objects
-		var apt []ArcAndPinTransaction
+		var apt []PinnedArcTransaction
 		res := models.Db.
 			Joins("JOIN pins p on p.id = pinned_arcs.pin_id").
 			Joins("JOIN arcs a on a.id = pinned_arcs.arc_id").
 			Joins("LEFT JOIN transactions t on t.ipfs_cid = pinned_arcs.cid").
-			Select("p.*, a.*, t.*").
-			Where(fmt.Sprintf("ST_DWithin(p.location, 'SRID=4326;POINT(%f %f)'::geography, %f)", lon, lat, 10000.0)).
+			Select(`a.name, a.description, a.created_at_inner, a.owner_uid, a.owner_provider, a.cid as "arc_cid", a.cover_image_uri as "arc_cover_image_uri", pinned_arcs.cid as "pinned_arc_cid", p.location, t.wallet_addr, t.contract_addr`).
+			Where(fmt.Sprintf("ST_DWithin(p.location, 'SRID=4326;POINT(%f %f)'::geography, %f)", lon, lat, 100000.0)).
 			Table("pinned_arcs").
 			Find(&apt)
 		if res.Error != nil {
@@ -522,6 +531,7 @@ func HandleObjectSearch(c *gin.Context) {
 			c.JSON(500, gin.H{"error": ""})
 			return
 		}
+		glog.Infof("search objects result count=%d", len(apt))
 
 		resp.Results = make([]respObjectSearchItem, len(apt))
 		for i, a := range apt {

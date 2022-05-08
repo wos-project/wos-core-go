@@ -174,7 +174,7 @@ func TestObjects(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 	err = json.Unmarshal([]byte(w.Body.String()), &search)
 	assert.Equal(t, 1, len(search.Results))
-	assert.Equal(t, "https://us-east-1.amazonaws.com/worldos//media/example-cover-image.jpg", search.Results[0].CoverImageUri)
+	assert.Equal(t, "https://worldos.s3.amazonaws.com/QmXN8whBDCKTDcPUBb5VJ1QjbcfJv7uGenQ7jFFoM6qxSv/media/example-cover-image.jpg", search.Results[0].CoverImageUri)
 	assert.Equal(t, "QmXN8whBDCKTDcPUBb5VJ1QjbcfJv7uGenQ7jFFoM6qxSv", search.Results[0].IpfsCid)
 
 	// batch upload
