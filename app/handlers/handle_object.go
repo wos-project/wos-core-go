@@ -483,21 +483,50 @@ func HandleObjectSearch(c *gin.Context) {
 
 	// TODO: validate more
 
-	if request.MatchExpressions[0].Key == "name" {
+	if request.MatchExpressions[0].Key == "contract" {
 
-		// TODO: validate key/values
-
-		var arcs []models.Arc
-		res := models.Db.Where("name like ?", "%"+request.MatchExpressions[0].Values[0]+"%").Find(&arcs)
+		var apt []PinnedArcTransaction
+		res := models.Db.
+			Joins("JOIN pins p on p.id = pinned_arcs.pin_id").
+			Joins("JOIN arcs a on a.id = pinned_arcs.arc_id").
+			Joins("LEFT JOIN transactions t on t.ipfs_cid = pinned_arcs.cid").
+			Select(`a.name, a.description, a.created_at_inner, a.owner_uid, a.owner_provider, a.cid as "arc_cid", a.cover_image_uri as "arc_cover_image_uri", pinned_arcs.cid as "pinned_arc_cid", p.location, t.wallet_addr, t.contract_addr`).
+			Where("t.contract_addr = ?", request.MatchExpressions[0].Values[0]).
+			Table("pinned_arcs").
+			Find(&apt)
 		if res.Error != nil {
 			glog.Errorf("search query error %v", res.Error)
 			c.JSON(500, gin.H{"error": ""})
 			return
 		}
+		glog.Infof("search objects result count=%d", len(apt))
 
-		resp.Results = make([]respObjectSearchItem, len(arcs))
-		for i, a := range arcs {
-			resp.Results[i].MarshalFromArc(&a)
+		resp.Results = make([]respObjectSearchItem, len(apt))
+		for i, a := range apt {
+			resp.Results[i].MarshalFromPinnedArcTransaction(&a)
+		}
+
+	} else if request.MatchExpressions[0].Key == "name" {
+
+		var apt []PinnedArcTransaction
+		res := models.Db.
+			Joins("JOIN pins p on p.id = pinned_arcs.pin_id").
+			Joins("JOIN arcs a on a.id = pinned_arcs.arc_id").
+			Joins("LEFT JOIN transactions t on t.ipfs_cid = pinned_arcs.cid").
+			Select(`a.name, a.description, a.created_at_inner, a.owner_uid, a.owner_provider, a.cid as "arc_cid", a.cover_image_uri as "arc_cover_image_uri", pinned_arcs.cid as "pinned_arc_cid", p.location, t.wallet_addr, t.contract_addr`).
+			Where("a.name LIKE ?", "%" + request.MatchExpressions[0].Values[0] + "%").
+			Table("pinned_arcs").
+			Find(&apt)
+		if res.Error != nil {
+			glog.Errorf("search query error %v", res.Error)
+			c.JSON(500, gin.H{"error": ""})
+			return
+		}
+		glog.Infof("search objects result count=%d", len(apt))
+
+		resp.Results = make([]respObjectSearchItem, len(apt))
+		for i, a := range apt {
+			resp.Results[i].MarshalFromPinnedArcTransaction(&a)
 		}
 
 	} else if request.MatchExpressions[0].Key == "location" {
