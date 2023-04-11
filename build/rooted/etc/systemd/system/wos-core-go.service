@@ -1,0 +1,18 @@
+[Unit]
+Description=WOS Core Go
+ConditionPathExists=/var/lib/wos-core-go
+After=network.target
+
+[Service]
+Type=simple
+User=mobilityapi
+Group=mobilityapi
+WorkingDirectory=/var/lib/wos-core-go
+ExecStart=/var/lib/wos-core-go/wos-core-go -config /var/lib/wos-core-go/config.yaml -log_dir /var/log/wos-core-go
+Restart=on-failure
+RestartSec=10
+StandardOutput=append:/var/log/wos-core-go/wos-core-go.log
+StandardError=append:/var/log/wos-core-go/wos-core-go.log
+
+[Install]
+WantedBy=multi-user.target

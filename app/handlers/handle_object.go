@@ -116,6 +116,7 @@ type respObjectSearchItem struct {
 	IpfsCid      string `json:"ipfsCid"`
 	ContractAddr string `json:"contractAddr"`
 	WalletAddr   string `json:"walletAddr"`
+	WalletKind   string `json:"walletKind"`
 }
 
 func (si *respObjectSearchItem) MarshalFromArc(m *models.Arc) {
@@ -162,6 +163,7 @@ func (si *respObjectSearchItem) MarshalFromPinnedArcTransaction(m *PinnedArcTran
 	si.PinLocation.Lon = m.Location.Lon
 
 	si.WalletAddr = m.WalletAddr
+	si.WalletKind = m.WalletKind
 	si.ContractAddr = m.ContractAddr
 }
 
@@ -180,6 +182,7 @@ type PinnedArcTransaction struct {
 	ArcCoverImageUri string          `gorm:"arc_cover_image_uri"`
 	PinnedArcCid     string          `gorm:"pinned_arc_cid"`
 	WalletAddr       string          `gorm:"wallet_addr"`
+	WalletKind       string          `gorm:"wallet_kind"`
 	ContractAddr     string          `gorm:"contract_addr"`
 	Location         models.PointGeo `gorm:"column:location"`
 }
@@ -490,7 +493,7 @@ func HandleObjectSearch(c *gin.Context) {
 			Joins("JOIN pins p on p.id = pinned_arcs.pin_id").
 			Joins("JOIN arcs a on a.id = pinned_arcs.arc_id").
 			Joins("LEFT JOIN transactions t on t.ipfs_cid = pinned_arcs.cid").
-			Select(`a.name, a.description, a.created_at_inner, a.owner_uid, a.owner_provider, a.cid as "arc_cid", a.cover_image_uri as "arc_cover_image_uri", pinned_arcs.cid as "pinned_arc_cid", p.location, t.wallet_addr, t.contract_addr`).
+			Select(`a.name, a.description, a.created_at_inner, a.owner_uid, a.owner_provider, a.cid as "arc_cid", a.cover_image_uri as "arc_cover_image_uri", pinned_arcs.cid as "pinned_arc_cid", p.location, t.wallet_addr, t.wallet_kind, t.contract_addr`).
 			Where("t.contract_addr = ?", request.MatchExpressions[0].Values[0]).
 			Table("pinned_arcs").
 			Find(&apt)
@@ -513,8 +516,8 @@ func HandleObjectSearch(c *gin.Context) {
 			Joins("JOIN pins p on p.id = pinned_arcs.pin_id").
 			Joins("JOIN arcs a on a.id = pinned_arcs.arc_id").
 			Joins("LEFT JOIN transactions t on t.ipfs_cid = pinned_arcs.cid").
-			Select(`a.name, a.description, a.created_at_inner, a.owner_uid, a.owner_provider, a.cid as "arc_cid", a.cover_image_uri as "arc_cover_image_uri", pinned_arcs.cid as "pinned_arc_cid", p.location, t.wallet_addr, t.contract_addr`).
-			Where("a.name LIKE ?", "%" + request.MatchExpressions[0].Values[0] + "%").
+			Select(`a.name, a.description, a.created_at_inner, a.owner_uid, a.owner_provider, a.cid as "arc_cid", a.cover_image_uri as "arc_cover_image_uri", pinned_arcs.cid as "pinned_arc_cid", p.location, t.wallet_addr, t.wallet_kind, t.contract_addr`).
+			Where("LOWER(a.name) LIKE ?", "%" + strings.ToLower(request.MatchExpressions[0].Values[0]) + "%").
 			Table("pinned_arcs").
 			Find(&apt)
 		if res.Error != nil {
@@ -551,7 +554,7 @@ func HandleObjectSearch(c *gin.Context) {
 			Joins("JOIN pins p on p.id = pinned_arcs.pin_id").
 			Joins("JOIN arcs a on a.id = pinned_arcs.arc_id").
 			Joins("LEFT JOIN transactions t on t.ipfs_cid = pinned_arcs.cid").
-			Select(`a.name, a.description, a.created_at_inner, a.owner_uid, a.owner_provider, a.cid as "arc_cid", a.cover_image_uri as "arc_cover_image_uri", pinned_arcs.cid as "pinned_arc_cid", p.location, t.wallet_addr, t.contract_addr`).
+			Select(`a.name, a.description, a.created_at_inner, a.owner_uid, a.owner_provider, a.cid as "arc_cid", a.cover_image_uri as "arc_cover_image_uri", pinned_arcs.cid as "pinned_arc_cid", p.location, t.wallet_addr, t.wallet_kind, t.contract_addr`).
 			Where(fmt.Sprintf("ST_DWithin(p.location, 'SRID=4326;POINT(%f %f)'::geography, %f)", lon, lat, 100000.0)).
 			Table("pinned_arcs").
 			Find(&apt)
