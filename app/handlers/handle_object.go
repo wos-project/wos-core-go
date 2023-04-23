@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"regexp"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -223,8 +224,8 @@ func HandleObjectArchiveUploadMultipart(c *gin.Context) {
 		c.JSON(500, gin.H{"error": ""})
 		return
 	}
-	// TODO: debugging
-	//defer os.RemoveAll(tempDirPath)
+	defer os.RemoveAll(tempDirPath)
+	glog.Infof("HandleObjectArchiveUploadMultipart created tempDir %s", tempDirPath)
 
 	// expand tar
 	mf, err := file.Open()
@@ -298,6 +299,8 @@ func HandleObjectArchiveGet(c *gin.Context) {
 		c.JSON(500, gin.H{"error": ""})
 		return
 	}
+	defer os.RemoveAll(tempDirPath)
+	glog.Infof("HandleObjectArchiveGet created tempDir %s", tempDirPath)
 
 	// get files from IPFS and save to tmp
 	err = utils.Ipfs.DownloadDirectory(tempDirPath, cid)
@@ -314,6 +317,7 @@ func HandleObjectArchiveGet(c *gin.Context) {
 		glog.Errorf("Could not create tarball file '%s', got error '%s'", tarballFilePath, err.Error())
 	}
 	defer tarballFile.Close()
+	defer os.RemoveAll(tarballFilePath)
 
 	tarWriter := tar.NewWriter(tarballFile)
 	defer tarWriter.Close()
@@ -370,6 +374,7 @@ func HandleObjectIndexPost(c *gin.Context) {
 		return
 	}
 	defer os.RemoveAll(tempDirPath)
+	glog.Infof("HandleObjectIndexPost created tempDir %s", tempDirPath)
 
 	// save index file
 	err = os.WriteFile(path.Join(tempDirPath, viper.GetString("media.indexFilename")), jsonData, 0644)
@@ -488,13 +493,23 @@ func HandleObjectSearch(c *gin.Context) {
 
 	if request.MatchExpressions[0].Key == "contract" {
 
+		// parse: contract : ca-near.testnet-questori.testnet-QmNwj8bWog63SDkRybr6Ry3xPK8712CGbhtVwjsBMrdVUu
+		s := request.MatchExpressions[0].Values[0]
+		re1 := regexp.MustCompile(`ca-(.*)-(.*)-(.*)`)
+		result := re1.FindStringSubmatch(s)
+		if result == nil {
+			return
+		}
+		contractAddr := result[2]
+		ipfsCid := result[3]
+
 		var apt []PinnedArcTransaction
 		res := models.Db.
 			Joins("JOIN pins p on p.id = pinned_arcs.pin_id").
 			Joins("JOIN arcs a on a.id = pinned_arcs.arc_id").
 			Joins("LEFT JOIN transactions t on t.ipfs_cid = pinned_arcs.cid").
 			Select(`a.name, a.description, a.created_at_inner, a.owner_uid, a.owner_provider, a.cid as "arc_cid", a.cover_image_uri as "arc_cover_image_uri", pinned_arcs.cid as "pinned_arc_cid", p.location, t.wallet_addr, t.wallet_kind, t.contract_addr`).
-			Where("t.contract_addr = ?", request.MatchExpressions[0].Values[0]).
+			Where("t.contract_addr = ? AND t.ipfs_cid = ?", contractAddr, ipfsCid).
 			Table("pinned_arcs").
 			Find(&apt)
 		if res.Error != nil {
@@ -700,6 +715,7 @@ func HandleObjectBatchUploadBegin(c *gin.Context) {
 		c.JSON(500, gin.H{"error": ""})
 		return
 	}
+	glog.Infof("HandleObjectBatchUploadBegin created tempDir %s", tempDirPath)
 
 	// create session
 	var mu models.MediaUpload

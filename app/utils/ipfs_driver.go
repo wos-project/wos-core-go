@@ -45,6 +45,7 @@ func (i *IPFS_Driver) UploadDirectory(localDirPath string) (cid string, err erro
 	if err != nil {
 		return "", err
 	}
+	defer os.RemoveAll(tempDirPath)
 
 	err = CopyDir(localDirPath, tempDirPath)
 	if err != nil {
@@ -84,6 +85,7 @@ func (i *IPFS_Driver) UploadString(body string, relPath string) (cid string, err
 	if err != nil {
 		return "", err
 	}
+	defer os.RemoveAll(tempDirPath)
 
 	prefixedPathPlusRelPath := path.Join(tempDirPath, filepath.Dir(relPath))
 	err = os.MkdirAll(prefixedPathPlusRelPath, 0755)
@@ -122,6 +124,7 @@ func (i *IPFS_Driver) UploadFile(localPath string, relPath string) (cid string, 
 	if err != nil {
 		return "", err
 	}
+	defer os.RemoveAll(tempDirPath)
 
 	prefixedPathPlusRelPath := path.Join(tempDirPath, filepath.Dir(relPath))
 	err = os.MkdirAll(prefixedPathPlusRelPath, 0755)
